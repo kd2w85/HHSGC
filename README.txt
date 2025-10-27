@@ -1,1 +1,0 @@
-BlankStart-NoPlaceholders: starts with 4 empty name fields and auto-focus on the first.
