@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>HHSGC — Blank Start (No Placeholders)</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>HHSGC — Blank Start (6/6/6)</title>
 <style>
   :root{--grid:#e5e7eb;--ink:#111827;}
   html,body{height:100%;margin:0;background:#fff;color:#111;font:600 16px/1.4 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial;}
@@ -131,13 +131,11 @@
     var host=$("pList"); host.innerHTML="";
     state.players.forEach(function(p,i){
       var row=document.createElement("div"); row.className="row"; row.style.marginBottom="6px";
-      row.innerHTML='<input type="text" value="'+(p.name||"")+'" data-i="'+i+'" class="pname" style="flex:2;padding:10px;border:2px solid var(--grid);border-radius:10px;font-weight:700">'
+      row.innerHTML='<input type="text" value="'+(p.name||"")+'" data-i="'+i+'" class="pname" style="flex:2;padding:10px;border:2px solid var(--grid);border-radius:10px;font-weight:700" />'
                    +'<button class="btn ghost" data-del="'+i+'" style="flex:0 0 auto">✕</button>';
       host.appendChild(row);
     });
-    // Auto-focus first empty name
-    var first=document.querySelector('#pList input.pname');
-    if(first){ first.focus(); first.select(); }
+    var first=document.querySelector('#pList input.pname'); if(first){ first.focus(); first.select(); }
   }
   function renderTeams(boxId, segIndex, defaultRemaining){
     var host=$(boxId); host.innerHTML="";
@@ -185,8 +183,8 @@
         if(state.stage>=STAGES.SCORE3 && h<12) disabled=true;
         var td=document.createElement("td");
         td.innerHTML='<div style="display:grid;grid-template-rows:1fr 1fr">'
-          + '<input class="sc'+(disabled?' disabled':'')+'" '+(disabled?'disabled':'')+' inputmode="numeric" maxlength="2" data-n="'+(p.name||("Player "+(i+1)))+'" data-k="strokes" data-h="'+h+'" data-r="'+(i*2)+'" data-c="'+h+'" value="'+(sc.strokes[h])+'">'
-          + '<input class="pt tiny'+(disabled?' disabled':'')+'" '+(disabled?'disabled':'')+' inputmode="numeric" maxlength="2" data-n="'+(p.name||("Player "+(i+1)))+'" data-k="putts" data-h="'+h+'" data-r="'+(i*2+1)+'" data-c="'+h+'" value="'+(sc.putts[h])+'">'
+          + '<input class="sc'+(disabled?' disabled':'')+'" '+(disabled?'disabled':'')+' inputmode="numeric" maxlength="2" data-n="'+(p.name||("Player "+(i+1)))+'" data-k="strokes" data-h="'+h+'" data-r="'+(i*2)+'" data-c="'+h+'" value="'+(sc.strokes[h])+'" />'
+          + '<input class="pt tiny'+(disabled?' disabled':'')+'" '+(disabled?'disabled':'')+' inputmode="numeric" maxlength="2" data-n="'+(p.name||("Player "+(i+1)))+'" data-k="putts" data-h="'+h+'" data-r="'+(i*2+1)+'" data-c="'+h+'" value="'+(sc.putts[h])+'" />'
           + '</div>';
         tr.appendChild(td);
         var v=parseFloat(sc.strokes[h]); if(!isNaN(v)){ sum+=v; if(h<9) out+=v; else inn+=v; }
@@ -379,8 +377,52 @@
   tbody.addEventListener("input", function(e){
     var t=e.target; if(t.tagName!=="INPUT") return; if(t.disabled) return;
     var nm=t.dataset.n, k=t.dataset.k, h=+t.dataset.h;
-    if(k==="strokes"){ t.value=t.value.replace(/\D/g,'').slice(0,2); if(t.value and int(t.value)>10): t.value="10" }
+    if(k==="strokes"){
+      t.value = t.value.replace(/\D/g,'').slice(0,2);
+      var n = parseInt(t.value||"0",10); if(n>10){ t.value="10"; }
+    }else{
+      t.value = t.value.replace(/\D/g,'').slice(0,1);
+    }
+    if(!state.scores[nm]) ensure(nm);
+    state.scores[nm][k][h]=t.value;
+    var boundary=(h===5||h===11);
+    if(boundary && holeComplete(h)){
+      if(h===5 && state.stage===STAGES.SCORE1){ renderTeams("teams2",1,false); setStage(STAGES.TEAMS2); }
+      else if(h===11 && state.stage===STAGES.SCORE2){
+        state.players.forEach(function(p){
+          if(!p.teams) p.teams=[null,null,null];
+          if(p.teams[0] && p.teams[1] && !p.teams[2]){ var rem=(p.teams[0]===p.teams[1])?p.teams[0]:(p.teams[0]==="A"?"B":"A"); p.teams[2]=rem; }
+        });
+        renderTeams("teams3",2,true); setStage(STAGES.TEAMS3);
+      }
+    }
+    if(pending) clearTimeout(pending);
+    var delay=(k==="strokes")?260:100;
+    pending=setTimeout(function(){
+      var v=(t.value||"").trim();
+      if(k==="strokes"){ if(v==="") return; if(v.length===2 || v!=="1") moveDown(+t.dataset.r,+t.dataset.c); }
+      else{ if(v!=="") moveDown(+t.dataset.r,+t.dataset.c); }
+      pending=null;
+    },delay);
+    recompute();
   });
+
+  document.getElementById("newRound").addEventListener("click", function(){
+    state.players.forEach(function(p){ if(p.name){ state.scores[p.name]={strokes:Array(18).fill(""), putts:Array(18).fill("")}; p.teams=[null,null,null]; } });
+    renderTeams("teams1",0,false); renderTeams("teams2",1,false); renderTeams("teams3",2,true);
+    setStage(STAGES.TEAMS1);
+  });
+  document.getElementById("resetAll").addEventListener("click", function(){
+    state.players=[]; state.scores={}; renderPlayers(); setStage(STAGES.PLAYERS);
+    document.getElementById("thead").innerHTML=""; document.getElementById("tbody").innerHTML="";
+    document.getElementById("moneySummary").innerHTML="Pot: $0 — add players first.";
+  });
+
+  // Start with four blank name rows
+  state.players = [{name:"",teams:[null,null,null]},{name:"",teams:[null,null,null]},{name:"",teams:[null,null,null]},{name:"",teams:[null,null,null]}];
+  renderPlayers(); renderTeams("teams1",0,false); renderTeams("teams2",1,false); renderTeams("teams3",2,true);
+  renderTable(); recompute(); updateDots(); updatePanels();
+})();
 </script>
 </body>
 </html>
