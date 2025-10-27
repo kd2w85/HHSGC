@@ -1,105 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>HHSGC — Blank Start (6/6/6)</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>HHSGC — Mobile Scorecard</title>
 <style>
   :root{--grid:#e5e7eb;--ink:#111827;}
-  html,body{height:100%;margin:0;background:#fff;color:#111;font:600 16px/1.4 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial;}
-  .wrap{display:flex;gap:10px;flex-direction:column;padding:8px}
-  .panel{border:2px solid var(--grid);border-radius:12px;padding:10px}
-  .card{border:2px solid var(--grid);border-radius:12px;padding:8px}
-  .row{display:flex;gap:8px;align-items:center}
-  .row>*{flex:1}
-  .btn{border:2px solid #111;background:#111;color:#fff;border-radius:12px;padding:10px 12px;font-weight:800;cursor:pointer}
-  .btn.ghost{background:transparent;color:#111}
-  .badge{display:inline-block;border:2px solid var(--grid);border-radius:999px;padding:6px 10px;font-weight:900}
-  .tiny{font-size:12px;color:#6b7280}
-  .hint{font-weight:800}
-  .grid{overflow:auto;-webkit-overflow-scrolling:touch}
+
+    .wrap{display:flex;gap:10px;flex-direction:column;padding:8px}
+    .panel{border:2px solid #e5e7eb;border-radius:12px;padding:10px}
+    .card{border:2px solid #e5e7eb;border-radius:12px;padding:8px}
+    .row{display:flex;gap:8px;align-items:center}
+    input.sc{padding:10px 4px;font-size:18px;border:0;width:100%;text-align:center;font-weight:900}
+    input.pt{padding:10px 4px;font-size:16px;border:0;border-top:1px dashed #e5e7eb;width:100%;text-align:center;font-weight:900}
+    th{padding:6px 4px;font-size:14px}
+    td .tiny{font-size:12px}
+    .name{position:sticky;left:0;background:#f3f4f6}
+    .grid{overflow:auto;-webkit-overflow-scrolling:touch}
+    .btn{padding:10px 12px;border-radius:12px}
+    .badge{padding:6px 10px}
+    .divider{min-width:54px}
+    @media (orientation:landscape){
+      .wrap{flex-direction:row}
+      .panel{flex:0 0 360px}
+    }
+        
   table{border-collapse:separate;border-spacing:0;width:100%}
   th,td{border-right:1px solid var(--grid);border-bottom:1px solid var(--grid)}
   th:first-child,td:first-child{border-left:1px solid var(--grid)}
   thead th{position:sticky;top:0;background:#f8fafc;z-index:1}
-  th{padding:6px 4px;font-size:14px;background:#eef2ff;text-align:center;white-space:nowrap}
+  th{background:#eef2ff;text-align:center;white-space:nowrap}
   td{padding:0;text-align:center}
-  .name{position:sticky;left:0;background:#f3f4f6;text-align:left;padding:6px;font-weight:900}
+  .name{text-align:left;padding:6px;font-weight:900}
   .sum{background:#e8fff2;font-weight:900}
   .seg{background:#ecfeff;text-align:center;font-weight:900}
-  input.sc{padding:10px 4px;font-size:18px;border:0;width:100%;text-align:center;font-weight:900}
-  input.pt{padding:10px 4px;font-size:15px;border:0;border-top:1px dashed var(--grid);width:100%;text-align:center;font-weight:900}
-  .divider{background:#fff; font-weight:900; min-width:54px}
+  .tiny{font-size:11px;color:#6b7280;font-weight:900}
+  .btn{border:2px solid #111;background:#111;color:#fff;border-radius:12px}
+  .btn.ghost{background:transparent;color:#111}
+  .divider{background:#fff;font-weight:900}
   .asidebox{margin-top:10px;border:2px dashed var(--grid);border-radius:10px;padding:8px}
-  .stage{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .stage .dot{width:10px;height:10px;border-radius:50%;background:#e5e7eb}
-  .stage .dot.active{background:#10b981}
-  .disabled{opacity:.6;pointer-events:none}
 </style>
+
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#111111">
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js'));}
+</script>
+        
 </head>
 <body>
 <div class="wrap">
   <aside class="panel">
-    <div class="row" style="justify-content:space-between;align-items:center">
-      <h2 style="margin:0">HHSGC — Blank Start</h2>
-      <span class="badge">6/6/6 · $1 Putts Pot · +$0.25 Segments</span>
-    </div>
+    <h2 style="margin:0 0 8px">Setup</h2>
+    <label>Event</label>
+    <input id="eventName" type="text" value="HHSGC — Rotating Teams (6/6/6)" style="width:100%;padding:10px;border:2px solid var(--grid);border-radius:10px;font-weight:700">
+    <label>Scoring method (for hole winners)</label>
+    <select id="method" style="width:100%;padding:10px;border:2px solid var(--grid);border-radius:10px;font-weight:700">
+      <option value="best">Best Ball (lowest single per team)</option>
+      <option value="sum" selected>Team Total (sum all players on team)</option>
+    </select>
 
-    <div class="stage">
-      <span class="dot" id="d0"></span><span class="tiny">Players</span>
-      <span class="dot" id="d1"></span><span class="tiny">Teams 1–6</span>
-      <span class="dot" id="d2"></span><span class="tiny">Score 1–6</span>
-      <span class="dot" id="d3"></span><span class="tiny">Teams 7–12</span>
-      <span class="dot" id="d4"></span><span class="tiny">Score 7–12</span>
-      <span class="dot" id="d5"></span><span class="tiny">Teams 13–18</span>
-      <span class="dot" id="d6"></span><span class="tiny">Score 13–18</span>
-    </div>
-
-    <div id="playersBox">
-      <div class="hint">Step 1: Enter players (up to 8), then set Teams for Holes 1–6.</div>
-      <div id="pList"></div>
-      <div class="row" style="margin-top:8px">
-        <button class="btn" id="addP">+ Add Player</button>
-        <button class="btn ghost" id="nextTeams1">Next → Teams 1–6</button>
-      </div>
-    </div>
-
-    <div id="teamsBox1" style="display:none">
-      <div class="hint">Step 2: Assign Teams for Holes 1–6 (A/B), then start scoring.</div>
-      <div id="teams1"></div>
-      <div class="row" style="margin-top:8px">
-        <button class="btn ghost" id="backToPlayers">← Back</button>
-        <button class="btn" id="startS1">Start Scoring 1–6</button>
-      </div>
-    </div>
-
-    <div id="teamsBox2" style="display:none">
-      <div class="hint">Step 4: Assign Teams for Holes 7–12 (A/B), then continue scoring.</div>
-      <div id="teams2"></div>
-      <div class="row" style="margin-top:8px">
-        <button class="btn" id="startS2">Continue Scoring 7–12</button>
-      </div>
-    </div>
-
-    <div id="teamsBox3" style="display:none">
-      <div class="hint">Step 6: Teams for Holes 13–18 auto-filled as the remaining pairing (editable if needed).</div>
-      <div id="teams3"></div>
-      <div class="row" style="margin-top:8px">
-        <button class="btn" id="startS3">Finish Scoring 13–18</button>
-      </div>
-    </div>
-
-    <div class="asidebox tiny" id="moneySummary">Pot: $0 — add players first.</div>
+    <label>Players & Teams by Segment</label>
+    <div class="tiny" style="margin-bottom:6px">S1 = Holes 1–6 · S2 = 7–12 · S3 = 13–18</div>
+    <div id="players"></div>
     <div class="row" style="margin-top:8px">
-      <button class="btn ghost" id="newRound">New Round (keep players)</button>
-      <button class="btn ghost" id="resetAll">Reset All (players & scores)</button>
+      <button class="btn" id="addP">+ Add Player</button>
+      <button class="btn ghost" id="clearP">Clear Scores</button>
     </div>
+
+    <div class="asidebox tiny" id="moneySummary">$1 per player goes to lowest total putts (ties split). Segment bonuses: $0.25/player per winning segment.</div>
   </aside>
 
   <section class="card">
     <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap">
-      <div id="titleOut" style="font-size:20px;font-weight:900">Scorecard</div>
-      <span class="badge">Holes across · Strokes/Putts down</span>
+      <div id="titleOut" style="font-size:20px;font-weight:900">HHSGC — Rotating Teams (6/6/6)</div>
+      <span class="badge">OUT/IN · Segment points · $1 Putts Pot</span>
     </div>
     <div class="grid">
       <table id="card">
@@ -113,45 +88,33 @@
 <script>
 (function(){
   'use strict';
-  var STAGES={PLAYERS:0,TEAMS1:1,SCORE1:2,TEAMS2:3,SCORE2:4,TEAMS3:5,SCORE3:6};
-  var state={stage:0,players:[],scores:{},method:"sum",segmentBonus:0.25,puttFee:1.00};
+  var state = {players:[
+      {name:"Dave",teams:["A","B","A"]},
+      {name:"Earl",teams:["B","A","B"]},
+      {name:"Greg",teams:["A","B","A"]},
+      {name:"Cloy",teams:["B","A","B"]}
+    ],
+    scores:{}, method:"sum", segmentBonus:0.25, puttFee:1.00};
   var pending=null;
-  function $(id){return document.getElementById(id);}
   function ensure(n){ if(!state.scores[n]) state.scores[n]={strokes:Array(18).fill(""), putts:Array(18).fill("")}; }
+  function $(id){return document.getElementById(id);}
   function seg(h){return Math.floor(h/6);}
-  function setStage(s){ state.stage=s; updateDots(); updatePanels(); renderTable(); recompute(); }
-  function updateDots(){ for(var i=0;i<=6;i++){ var d=$("d"+i); if(!d) continue; d.className="dot"+(i<=state.stage?" active":""); } }
-  function updatePanels(){
-    $("playersBox").style.display=(state.stage===STAGES.PLAYERS)?"block":"none";
-    $("teamsBox1").style.display=(state.stage===STAGES.TEAMS1)?"block":"none";
-    $("teamsBox2").style.display=(state.stage===STAGES.TEAMS2)?"block":"none";
-    $("teamsBox3").style.display=(state.stage===STAGES.TEAMS3)?"block":"none";
-  }
-  function renderPlayers(){
-    var host=$("pList"); host.innerHTML="";
+
+  function renderSidebar(){
+    var host=$("players"); host.innerHTML="";
     state.players.forEach(function(p,i){
+      ensure(p.name);
       var row=document.createElement("div"); row.className="row"; row.style.marginBottom="6px";
-      row.innerHTML='<input type="text" value="'+(p.name||"")+'" data-i="'+i+'" class="pname" style="flex:2;padding:10px;border:2px solid var(--grid);border-radius:10px;font-weight:700" />'
-                   +'<button class="btn ghost" data-del="'+i+'" style="flex:0 0 auto">✕</button>';
-      host.appendChild(row);
-    });
-    var first=document.querySelector('#pList input.pname'); if(first){ first.focus(); first.select(); }
-  }
-  function renderTeams(boxId, segIndex, defaultRemaining){
-    var host=$(boxId); host.innerHTML="";
-    state.players.forEach(function(p,i){
-      if(!p.teams) p.teams=[null,null,null];
-      if(defaultRemaining && p.teams[0]!=null && p.teams[1]!=null && p.teams[2]==null){
-        var t0=p.teams[0], t1=p.teams[1];
-        p.teams[2]=(t0===t1)?t0:(t0==="A"?"B":"A");
-      }
-      var cur=p.teams[segIndex]||"A";
-      var row=document.createElement("div"); row.className="row"; row.style.marginBottom="6px";
-      row.innerHTML='<div class="tiny" style="flex:2;font-weight:800">'+(p.name||("Player "+(i+1)))+'</div>'
-                   +'<select data-i="'+i+'" data-s="'+segIndex+'" class="pteam" style="padding:10px;border:2px solid var(--grid);border-radius:10px"><option '+(cur==="A"?"selected":"")+'>A</option><option '+(cur==="B"?"selected":"")+'>B</option></select>';
+      row.innerHTML=''
+        + '<input type="text" value="'+p.name+'" data-i="'+i+'" class="pname" style="flex:2;padding:10px;border:2px solid #e5e7eb;border-radius:10px;font-weight:700">'
+        + '<select data-i="'+i+'" data-s="0" class="pteam" style="padding:10px;border:2px solid #e5e7eb;border-radius:10px"><option '+(p.teams[0]==="A"?"selected":"")+'>A</option><option '+(p.teams[0]==="B"?"selected":"")+'>B</option></select>'
+        + '<select data-i="'+i+'" data-s="1" class="pteam" style="padding:10px;border:2px solid #e5e7eb;border-radius:10px"><option '+(p.teams[1]==="A"?"selected":"")+'>A</option><option '+(p.teams[1]==="B"?"selected":"")+'>B</option></select>'
+        + '<select data-i="'+i+'" data-s="2" class="pteam" style="padding:10px;border:2px solid #e5e7eb;border-radius:10px"><option '+(p.teams[2]==="A"?"selected":"")+'>A</option><option '+(p.teams[2]==="B"?"selected":"")+'>B</option></select>'
+        + '<button class="btn ghost" data-del="'+i+'" style="flex:0 0 auto;padding:8px 10px">✕</button>';
       host.appendChild(row);
     });
   }
+
   function renderTable(){
     var thead=$("thead"), tbody=$("tbody"); thead.innerHTML=""; tbody.innerHTML="";
     var trh=document.createElement("tr");
@@ -168,23 +131,19 @@
     var tht=document.createElement("th"); tht.textContent="Strokes TOT"; trh.appendChild(tht);
     var thearn=document.createElement("th"); thearn.textContent="Earnings $"; trh.appendChild(thearn);
     thead.appendChild(trh);
+
     state.players.forEach(function(p,i){
-      if(!p.teams) p.teams=[null,null,null];
-      var sc=state.scores[p.name]||{strokes:Array(18).fill(""), putts:Array(18).fill("")};
+      ensure(p.name);
+      var sc=state.scores[p.name];
       var tr=document.createElement("tr");
       var nameCell=document.createElement("td"); nameCell.className="name";
-      nameCell.textContent=(p.name||("Player "+(i+1)))+" ("+(p.teams.map(function(x){return x||'-';}).join('/'))+")";
-      tr.appendChild(nameCell);
-      var out=0,inn=0,sum=0,puttsTot=0;
+      nameCell.textContent = p.name+" ("+p.teams.join('/')+")"; tr.appendChild(nameCell);
+      var out=0, inn=0, sum=0, puttsTot=0;
       for(var h=0;h<18;h++){
-        var disabled=false;
-        if(state.stage<=STAGES.SCORE1 && h>=6) disabled=true;
-        if(state.stage===STAGES.SCORE2 && (h<6||h>=12)) disabled=true;
-        if(state.stage>=STAGES.SCORE3 && h<12) disabled=true;
         var td=document.createElement("td");
         td.innerHTML='<div style="display:grid;grid-template-rows:1fr 1fr">'
-          + '<input class="sc'+(disabled?' disabled':'')+'" '+(disabled?'disabled':'')+' inputmode="numeric" maxlength="2" data-n="'+(p.name||("Player "+(i+1)))+'" data-k="strokes" data-h="'+h+'" data-r="'+(i*2)+'" data-c="'+h+'" value="'+(sc.strokes[h])+'" />'
-          + '<input class="pt tiny'+(disabled?' disabled':'')+'" '+(disabled?'disabled':'')+' inputmode="numeric" maxlength="2" data-n="'+(p.name||("Player "+(i+1)))+'" data-k="putts" data-h="'+h+'" data-r="'+(i*2+1)+'" data-c="'+h+'" value="'+(sc.putts[h])+'" />'
+          + '<input class="sc" inputmode="numeric" maxlength="2" data-n="'+p.name+'" data-k="strokes" data-h="'+h+'" data-r="'+(i*2)+'" data-c="'+h+'" value="'+(sc.strokes[h])+'">'
+          + '<input class="pt tiny" inputmode="numeric" maxlength="2" data-n="'+p.name+'" data-k="putts" data-h="'+h+'" data-r="'+(i*2+1)+'" data-c="'+h+'" value="'+(sc.putts[h])+'">'
           + '</div>';
         tr.appendChild(td);
         var v=parseFloat(sc.strokes[h]); if(!isNaN(v)){ sum+=v; if(h<9) out+=v; else inn+=v; }
@@ -198,230 +157,140 @@
       var ptt=document.createElement("td"); ptt.className="sum"; ptt.dataset.puttsFor=p.name; ptt.textContent=puttsTot||""; tr.appendChild(ptt);
       var tot=document.createElement("td"); tot.className="sum"; tot.dataset.totFor=p.name; tot.textContent=sum||""; tr.appendChild(tot);
       var earn=document.createElement("td"); earn.className="sum"; earn.dataset.earnFor=p.name; earn.textContent="0.00"; tr.appendChild(earn);
-      document.getElementById("tbody").appendChild(tr);
+      tbody.appendChild(tr);
     });
+
     var winRow=document.createElement("tr");
-    var winLab=document.createElement("td"); winLab.className="seg"; winLab.textContent="Hole Winner (by segment teams)"; winRow.appendChild(winLab);
+    var winLab=document.createElement("td"); winLab.className="seg"; winLab.textContent="Hole Winner (segment teams)"; winRow.appendChild(winLab);
     for(var h=0;h<18;h++){
-      var td=document.createElement("td"); td.className="seg"; td.id="win_"+h; td.textContent="-"; winRow.appendChild(td);
+      var td=document.createElement("td"); td.className="seg"; td.id="win_'+h+'"; td.textContent="-"; winRow.appendChild(td);
       if(h===8){ let d=document.createElement("td"); d.className="seg"; d.textContent=""; winRow.appendChild(d); }
       if(h===17){ let d=document.createElement("td"); d.className="seg"; d.textContent=""; winRow.appendChild(d); }
     }
     var tail=document.createElement("td"); tail.className="seg"; tail.colSpan=6; tail.textContent=""; winRow.appendChild(tail);
-    document.getElementById("tbody").appendChild(winRow);
+    tbody.appendChild(winRow);
   }
-  function holeComplete(col){
-    for(var i=0;i<state.players.length;i++){
-      var nm=state.players[i].name; if(!nm) return false;
-      var s=state.scores[nm]; if(!s) return false;
-      var a=s.strokes[col], b=s.putts[col];
-      if(String(a||"").trim()==="" || String(b||"").trim()==="") return false;
-    }
-    return true;
-  }
-  function firstMissingInputInHole(c){
-    for(var i=0;i<state.players.length;i++){
-      var nm=state.players[i].name; if(!nm) continue;
-      var s=state.scores[nm]; if(!s) continue;
-      if(String(s.strokes[c]||"").trim()==="") return document.querySelector('input.sc[data-n="'+nm+'"][data-c="'+c+'"]');
-      if(String(s.putts[c]||"").trim()==="") return document.querySelector('input.pt[data-n="'+nm+'"][data-c="'+c+'"]');
-    }
-    return null;
-  }
-  function moveDown(r,c){
-    var next=document.querySelector('input[data-r="'+(r+1)+'"][data-c="'+c+'"]');
-    if(next && !next.disabled){ next.focus(); next.select(); return; }
-    if(holeComplete(c)){
-      var adv=document.querySelector('input[data-r="0"][data-c="'+(c+1)+'"]');
-      if(adv && !adv.disabled){ adv.focus(); adv.select(); return; }
-    } else {
-      var miss=firstMissingInputInHole(c);
-      if(miss && !miss.disabled){ miss.focus(); miss.select(); return; }
-    }
-  }
-  function moveUp(r,c){
-    var prev=document.querySelector('input[data-r="'+(r-1)+'"][data-c="'+c+'"]');
-    if(prev && !prev.disabled){ prev.focus(); prev.select(); return; }
-    var lastR=state.players.length*2-1;
-    var back=document.querySelector('input[data-r="'+lastR+'"][data-c="'+(c-1)+'"]');
-    if(back && !back.disabled){ back.focus(); back.select(); }
-  }
+
+  function holeComplete(c){ for(var i=0;i<state.players.length;i++){var nm=state.players[i].name,s=state.scores[nm]; if((s.strokes[c]+'').trim()===''||(s.putts[c]+'').trim()==='') return false;} return true; }
+  function firstMissing(c){ for(var i=0;i<state.players.length;i++){var nm=state.players[i].name,s=state.scores[nm]; if((s.strokes[c]+'').trim()==='') return document.querySelector('input.sc[data-n="'+nm+'"][data-c="'+c+'"]'); if((s.putts[c]+'').trim()==='') return document.querySelector('input.pt[data-n="'+nm+'"][data-c="'+c+'"]');} return null; }
+  function moveDown(r,c){ var next=document.querySelector('input[data-r="'+(r+1)+'"][data-c="'+c+'"]'); if(next){next.focus();next.select();return;} if(holeComplete(c)){ var adv=document.querySelector('input[data-r="0"][data-c="'+(c+1)+'"]'); if(adv){adv.focus();adv.select();return;} } else { var miss=firstMissing(c); if(miss){miss.focus();miss.select();} }}
+  function moveUp(r,c){ var prev=document.querySelector('input[data-r="'+(r-1)+'"][data-c="'+c+'"]'); if(prev){prev.focus();prev.select();return;} var lastR=state.players.length*2-1; var back=document.querySelector('input[data-r="'+lastR+'"][data-c="'+(c-1)+'"]'); if(back){back.focus();back.select();} }
+
   function recompute(){
-    if(state.players.length===0){ $("moneySummary").innerHTML="Pot: $0 — add players first."; return; }
     var segmentTeamWins=[{A:0,B:0},{A:0,B:0},{A:0,B:0}];
     for(var h=0;h<18;h++){
       var sg=seg(h),a=[],b=[];
-      state.players.forEach(function(p){
-        var t=(p.teams||[])[sg]; var nm=p.name; if(!nm) return;
-        var v=parseFloat((state.scores[nm]||{strokes:[]}).strokes[h]);
-        if(isNaN(v) || !t) return;
-        if(t==="A") a.push(v); else if(t==="B") b.push(v);
-      });
-      var aScore=a.length?Math.min.apply(null,a):null;
-      var bScore=b.length?Math.min.apply(null,b):null;
-      var w=document.getElementById("win_"+h);
-      if(w){
-        if(aScore!=null && bScore!=null){
-          if(aScore<bScore){ w.textContent="A"; segmentTeamWins[sg].A++; }
-          else if(bScore<aScore){ w.textContent="B"; segmentTeamWins[sg].B++; }
-          else { w.textContent="Tie"; }
-        } else { w.textContent="-"; }
-      }
+      state.players.forEach(function(p){var t=p.teams[sg]; var v=parseFloat(state.scores[p.name]?.strokes[h]); if(isNaN(v)) return; if(t==="A") a.push(v); else if(t==="B") b.push(v);});
+      var as=null,bs=null;
+      if(state.method==="best"){ if(a.length) as=Math.min.apply(null,a); if(b.length) bs=Math.min.apply(null,b); }
+      else { if(a.length) as=a.reduce(function(x,c){return x+c;},0); if(b.length) bs=b.reduce(function(x,c){return x+c;},0); }
+      var w=document.getElementById("win_'+h+'");
+      if(as!=null && bs!=null){
+        if(as<bs){ if(w) w.textContent="A"; segmentTeamWins[sg].A++; }
+        else if(bs<as){ if(w) w.textContent="B"; segmentTeamWins[sg].B++; }
+        else { if(w) w.textContent="Tie"; }
+      } else { if(w) w.textContent="-"; }
     }
     var puttsTotals=[];
-    state.players.forEach(function(p){
-      var nm=p.name; if(!nm) return;
-      var sc=state.scores[nm]||{strokes:Array(18).fill(""), putts:Array(18).fill("")}, out=0,inn=0,tot=0,pt=0;
-      for(var h=0;h<18;h++){
-        var v=parseFloat(sc.strokes[h]); if(!isNaN(v)){ if(h<9) out+=v; else inn+=v; tot+=v; }
-        var pv=parseFloat(sc.putts[h]); if(!isNaN(pv)) pt+=pv;
-      }
-      var oc=document.querySelector('[data-out-for="'+nm+'"]'); if(oc) oc.textContent=out||"";
-      var ic=document.querySelector('[data-in-for="'+nm+'"]'); if(ic) ic.textContent=inn||"";
-      var tc=document.querySelector('[data-tot-for="'+nm+'"]'); if(tc) tc.textContent=tot||"";
-      var pc=document.querySelector('[data-putts-for="'+nm+'"]'); if(pc) pc.textContent=pt||"";
-      puttsTotals.push({name:nm, putts:pt});
+    state.players.forEach(function(p){ var sc=state.scores[p.name],out=0,inn=0,tot=0,pt=0;
+      for(var h=0;h<18;h++){ var v=parseFloat(sc.strokes[h]); if(!isNaN(v)){ if(h<9) out+=v; else inn+=v; tot+=v; } var pv=parseFloat(sc.putts[h]); if(!isNaN(pv)) pt+=pv; }
+      var oc=document.querySelector('[data-out-for="'+p.name+'"]'); if(oc) oc.textContent=out||"";
+      var ic=document.querySelector('[data-in-for="'+p.name+'"]'); if(ic) ic.textContent=inn||"";
+      var tc=document.querySelector('[data-tot-for="'+p.name+'"]'); if(tc) tc.textContent=tot||"";
+      var pc=document.querySelector('[data-putts-for="'+p.name+'"]'); if(pc) pc.textContent=pt||"";
+      puttsTotals.push({name:p.name,putts:pt});
     });
-    var bonuses={}; state.players.forEach(function(p){ if(p.name) bonuses[p.name]=0; });
-    for(var s=0;s<3;s++){
-      var win=null;
-      if(segmentTeamWins[s].A>segmentTeamWins[s].B) win="A"; else if(segmentTeamWins[s].B>segmentTeamWins[s].A) win="B";
-      if(win){ state.players.forEach(function(p){ if(p.name && (p.teams||[])[s]===win) bonuses[p.name]+=state.segmentBonus; }); }
+    var bonuses={}; state.players.forEach(function(p){bonuses[p.name]=0;});
+    for(var s=0;s<3;s++){ var win=null; if(segmentTeamWins[s].A>segmentTeamWins[s].B) win="A"; else if(segmentTeamWins[s].B>segmentTeamWins[s].A) win="B";
+      if(win){ state.players.forEach(function(p){ if(p.teams[s]===win) bonuses[p.name]+=state.segmentBonus; }); }
     }
-    var pot=state.players.filter(function(p){return (p.name||"").trim()!=="";}).length * state.puttFee;
+    var pot=state.players.length*state.puttFee;
     var valid=puttsTotals.filter(function(x){return !isNaN(x.putts) && x.putts>0;});
     var min=null; valid.forEach(function(x){ if(min===null||x.putts<min) min=x.putts; });
-    var winners=valid.filter(function(x){ return x.putts===min; });
-    var share=winners.length? pot/winners.length : 0;
-    var earnings={}; state.players.forEach(function(p){ if(p.name) earnings[p.name]=-state.puttFee; });
-    winners.forEach(function(w){ earnings[w.name]+=share; });
-    Object.keys(bonuses).forEach(function(n){ earnings[n]+=bonuses[n]; });
+    var winners=valid.filter(function(x){ return x.putts===min; }); var share=(winners.length? pot/winners.length : 0);
+    var earn={}; state.players.forEach(function(p){earn[p.name]=-state.puttFee;});
+    winners.forEach(function(w){earn[w.name]+=share;});
+    Object.keys(bonuses).forEach(function(n){earn[n]+=bonuses[n];});
     state.players.forEach(function(p){
-      if(!p.name) return;
-      var earnCell=document.querySelector('[data-earn-for="'+p.name+'"]'); if(earnCell) earnCell.textContent=earnings[p.name].toFixed(2);
-      var cells=document.querySelectorAll('[data-pseg-for="'+p.name+'"]');
-      cells.forEach(function(c){ var s=+c.dataset.seg; var team = segmentTeamWins[s].A>segmentTeamWins[s].B?"A":(segmentTeamWins[s].B>segmentTeamWins[s].A?"B":"Tie"); c.textContent = (team!=="Tie" && (p.teams||[])[s]===team) ? "1" : "0"; });
+      var earnCell=document.querySelector('[data-earn-for="'+p.name+'"]'); if(earnCell) earnCell.textContent=earn[p.name].toFixed(2);
+      var ps=document.querySelectorAll('[data-pseg-for="'+p.name+'"]');
+      ps.forEach(function(c){ var s=+c.dataset.seg; var team = segmentTeamWins[s].A>segmentTeamWins[s].B?"A":(segmentTeamWins[s].B>segmentTeamWins[s].A?"B":"Tie"); c.textContent = (team!=="Tie" && p.teams[s]===team) ? "1" : "0"; });
     });
-    var lines=[];
-    lines.push("Pot: $"+pot.toFixed(2)+" ("+state.players.filter(function(p){return (p.name||'').trim()!=='';}).length+" × $1)");
+    var lines=[]; lines.push("Pot: $"+pot.toFixed(2)+" ("+state.players.length+" × $1)");
     if(winners.length){ lines.push("Lowest total putts: "+winners.map(function(w){return w.name+" ("+w.putts+")";}).join(", ")); lines.push("Payout: $"+share.toFixed(2)+" each"); }
-    else { lines.push("Lowest total putts: —"); }
-    ["S1 (1–6)","S2 (7–12)","S3 (13–18)"].forEach(function(lbl,idx){
-      var t = segmentTeamWins[idx].A>segmentTeamWins[idx].B?"A":(segmentTeamWins[idx].B>segmentTeamWins[idx].A?"B":"Tie");
-      lines.push(lbl+": "+(t==="Tie"?"Tie (no bonus)":"Team "+t+" (+$0.25 to players)"));
-    });
+    else lines.push("Lowest total putts: —");
+    ["S1 (1–6)","S2 (7–12)","S3 (13–18)"].forEach(function(lbl,idx){ var t = segmentTeamWins[idx].A>segmentTeamWins[idx].B?"A":(segmentTeamWins[idx].B>segmentTeamWins[idx].A?"B":"Tie"); lines.push(lbl+": "+(t==="Tie"?"Tie (no bonus)":"Team "+t+" (+$0.25 to players)")); });
     $("moneySummary").innerHTML=lines.join("<br>");
   }
 
-  // Wiring
-  document.getElementById("addP").addEventListener("click", function(){
-    if(state.players.length>=8) return;
-    state.players.push({name:"",teams:[null,null,null]}); renderPlayers();
-  });
-  document.getElementById("pList").addEventListener("input", function(e){
-    if(e.target.className==="pname"){
-      var i=+e.target.dataset.i, nv=e.target.value, old=state.players[i].name;
-      state.players[i].name=nv;
-      if(nv && !state.scores[nv]) ensure(nv);
-      if(old && old!==nv && state.scores[old]){ state.scores[nv]=state.scores[old]; delete state.scores[old]; }
-    }
-  });
-  document.getElementById("pList").addEventListener("click", function(e){
-    if(e.target.dataset.del){
-      var i=+e.target.dataset.del, nm=state.players[i].name;
-      state.players.splice(i,1); if(nm) delete state.scores[nm]; renderPlayers();
-    }
-  });
-  document.getElementById("nextTeams1").addEventListener("click", function(){
-    var named=state.players.filter(function(p){ return (p.name||"").trim()!==""; });
-    if(named.length<2){ alert("Enter at least 2 player names."); return; }
-    state.players=named; state.players.forEach(function(p){ ensure(p.name); });
-    renderTeams("teams1",0,false); setStage(STAGES.TEAMS1);
-  });
-  document.getElementById("backToPlayers").addEventListener("click", function(){ setStage(STAGES.PLAYERS); });
-  document.getElementById("teams1").addEventListener("input", function(e){
-    if(e.target.className==="pteam"){ var i=+e.target.dataset.i, s=+e.target.dataset.s; if(!state.players[i].teams) state.players[i].teams=[null,null,null]; state.players[i].teams[s]=e.target.value; }
-  });
-  document.getElementById("startS1").addEventListener("click", function(){
-    for(var i=0;i<state.players.length;i++){ var t=state.players[i].teams&&state.players[i].teams[0]; if(t!=="A"&&t!=="B"){ alert("Assign team A or B for all players for Holes 1–6."); return; } }
-    setStage(STAGES.SCORE1);
-    var first=document.querySelector('input[data-r="0"][data-c="0"]'); if(first) first.focus();
-  });
-
-  document.getElementById("teams2").addEventListener("input", function(e){
-    if(e.target.className==="pteam"){ var i=+e.target.dataset.i, s=+e.target.dataset.s; if(!state.players[i].teams) state.players[i].teams=[null,null,null]; state.players[i].teams[s]=e.target.value; }
-  });
-  document.getElementById("startS2").addEventListener("click", function(){
-    for(var i=0;i<state.players.length;i++){ var t=state.players[i].teams&&state.players[i].teams[1]; if(t!=="A"&&t!=="B"){ alert("Assign team A or B for all players for Holes 7–12."); return; } }
-    setStage(STAGES.SCORE2);
-    var first=document.querySelector('input[data-r="0"][data-c="6"]'); if(first) first.focus();
-  });
-
-  document.getElementById("teams3").addEventListener("input", function(e){
-    if(e.target.className==="pteam"){ var i=+e.target.dataset.i, s=+e.target.dataset.s; if(!state.players[i].teams) state.players[i].teams=[null,null,null]; state.players[i].teams[s]=e.target.value; }
-  });
-  document.getElementById("startS3").addEventListener("click", function(){
-    for(var i=0;i<state.players.length;i++){ var t=state.players[i].teams&&state.players[i].teams[2]; if(t!=="A"&&t!=="B"){ alert("Assign team A or B for all players for Holes 13–18."); return; } }
-    setStage(STAGES.SCORE3);
-    var first=document.querySelector('input[data-r="0"][data-c="12"]'); if(first) first.focus();
-  });
-
-  var tbody=document.getElementById("tbody");
-  tbody.addEventListener("focusin", function(e){ if(e.target.tagName==="INPUT"){ if(pending) clearTimeout(pending); e.target.select(); } });
-  tbody.addEventListener("keydown", function(e){
-    var t=e.target; if(t.tagName!=="INPUT") return; var r=+t.dataset.r, c=+t.dataset.c;
-    if(pending){ clearTimeout(pending); pending=null; }
-    if(e.key==="Enter"||e.key==="ArrowDown"||(e.key==="Tab"&&!e.shiftKey)){ e.preventDefault(); moveDown(r,c); }
-    else if(e.key==="ArrowUp"||(e.key==="Tab"&&e.shiftKey)){ e.preventDefault(); moveUp(r,c); }
-  });
-  tbody.addEventListener("input", function(e){
-    var t=e.target; if(t.tagName!=="INPUT") return; if(t.disabled) return;
-    var nm=t.dataset.n, k=t.dataset.k, h=+t.dataset.h;
-    if(k==="strokes"){
-      t.value = t.value.replace(/\D/g,'').slice(0,2);
-      var n = parseInt(t.value||"0",10); if(n>10){ t.value="10"; }
-    }else{
-      t.value = t.value.replace(/\D/g,'').slice(0,1);
-    }
-    if(!state.scores[nm]) ensure(nm);
-    state.scores[nm][k][h]=t.value;
-    var boundary=(h===5||h===11);
-    if(boundary && holeComplete(h)){
-      if(h===5 && state.stage===STAGES.SCORE1){ renderTeams("teams2",1,false); setStage(STAGES.TEAMS2); }
-      else if(h===11 && state.stage===STAGES.SCORE2){
-        state.players.forEach(function(p){
-          if(!p.teams) p.teams=[null,null,null];
-          if(p.teams[0] && p.teams[1] && !p.teams[2]){ var rem=(p.teams[0]===p.teams[1])?p.teams[0]:(p.teams[0]==="A"?"B":"A"); p.teams[2]=rem; }
-        });
-        renderTeams("teams3",2,true); setStage(STAGES.TEAMS3);
+  function hookSidebar(){
+    $("players").addEventListener("input", function(e){
+      if(e.target.className==="pname"){
+        var i=+e.target.dataset.i,old=state.players[i].name,nv=e.target.value;
+        state.players[i].name=nv; ensure(nv);
+        if(old!==nv && state.scores[old]){ state.scores[nv]=state.scores[old]; delete state.scores[old]; }
+        renderTable(); recompute();
       }
-    }
-    if(pending) clearTimeout(pending);
-    var delay=(k==="strokes")?260:100;
-    pending=setTimeout(function(){
-      var v=(t.value||"").trim();
-      if(k==="strokes"){ if(v==="") return; if(v.length===2 || v!=="1") moveDown(+t.dataset.r,+t.dataset.c); }
-      else{ if(v!=="") moveDown(+t.dataset.r,+t.dataset.c); }
-      pending=null;
-    },delay);
-    recompute();
-  });
+      if(e.target.className==="pteam"){
+        var i=+e.target.dataset.i, sg=+e.target.dataset.s;
+        state.players[i].teams[sg]=e.target.value; recompute();
+      }
+    });
+    $("players").addEventListener("click", function(e){
+      if(e.target.dataset.del){ var i=+e.target.dataset.del, nm=state.players[i].name;
+        state.players.splice(i,1); delete state.scores[nm];
+        renderSidebar(); renderTable(); recompute();
+      }
+    });
+    document.getElementById("addP").addEventListener("click", function(){
+      var i=state.players.length; state.players.push({name:"Player "+(i+1),teams:["A","B","A"]});
+      renderSidebar(); renderTable(); recompute();
+    });
+    document.getElementById("clearP").addEventListener("click", function(){
+      state.players.forEach(function(p){ state.scores[p.name] = {strokes:Array(18).fill(""), putts:Array(18).fill("")}; });
+      renderTable(); recompute();
+      var first=document.querySelector('input[data-r="0"][data-c="0"]'); if(first) first.focus();
+    });
+    document.getElementById("method").addEventListener("change", function(){ state.method=this.value; recompute(); });
+    document.getElementById("eventName").addEventListener("input", function(){ document.getElementById("titleOut").textContent=this.value; });
+  }
 
-  document.getElementById("newRound").addEventListener("click", function(){
-    state.players.forEach(function(p){ if(p.name){ state.scores[p.name]={strokes:Array(18).fill(""), putts:Array(18).fill("")}; p.teams=[null,null,null]; } });
-    renderTeams("teams1",0,false); renderTeams("teams2",1,false); renderTeams("teams3",2,true);
-    setStage(STAGES.TEAMS1);
-  });
-  document.getElementById("resetAll").addEventListener("click", function(){
-    state.players=[]; state.scores={}; renderPlayers(); setStage(STAGES.PLAYERS);
-    document.getElementById("thead").innerHTML=""; document.getElementById("tbody").innerHTML="";
-    document.getElementById("moneySummary").innerHTML="Pot: $0 — add players first.";
-  });
+  function hookTable(){
+    var tbody=document.getElementById("tbody");
+    tbody.addEventListener("focusin", function(e){ if(e.target.tagName==="INPUT"){ if(pending) clearTimeout(pending); e.target.select(); } });
+    tbody.addEventListener("keydown", function(e){
+      var t=e.target; if(t.tagName!=="INPUT") return; var r=+t.dataset.r, c=+t.dataset.c;
+      if(pending){clearTimeout(pending); pending=null;}
+      if(e.key==="Enter"||e.key==="ArrowDown"||(e.key==="Tab"&&!e.shiftKey)){ e.preventDefault(); moveDown(r,c); }
+      else if(e.key==="ArrowUp"||(e.key==="Tab"&&e.shiftKey)){ e.preventDefault(); moveUp(r,c); }
+    });
+    tbody.addEventListener("input", function(e){
+      var t=e.target; if(t.tagName!=="INPUT") return; var nm=t.dataset.n, k=t.dataset.k, h=+t.dataset.h;
+      if(k==="strokes"){ t.value=t.value.replace(/\D/g,'').slice(0,2); }
+      else{ t.value=t.value.replace(/\D/g,'').slice(0,1); }
+      state.scores[nm][k][h]=t.value;
+      if(pending) clearTimeout(pending);
+      var delay=(k==="strokes")?260:100;
+      pending=setTimeout(function(){
+        var v=(t.value||"").trim();
+        if(k==="strokes"){
+          if(v==="") return;
+          if(v.length===2){ if(parseInt(v,10)>10){ v="10"; t.value=v; state.scores[nm][k][h]=v; } moveDown(+t.dataset.r,+t.dataset.c); }
+          else{ if(v!=="1"){ moveDown(+t.dataset.r,+t.dataset.c); } }
+        } else {
+          if(v!==""){ moveDown(+t.dataset.r,+t.dataset.c); }
+        }
+        pending=null;
+      }, delay);
+      recompute();
+    });
+  }
 
-  // Start with four blank name rows
-  state.players = [{name:"",teams:[null,null,null]},{name:"",teams:[null,null,null]},{name:"",teams:[null,null,null]},{name:"",teams:[null,null,null]}];
-  renderPlayers(); renderTeams("teams1",0,false); renderTeams("teams2",1,false); renderTeams("teams3",2,true);
-  renderTable(); recompute(); updateDots(); updatePanels();
+  function init(){
+    renderSidebar(); renderTable(); hookSidebar(); hookTable(); recompute();
+    var first=document.querySelector('input[data-r="0"][data-c="0"]'); if(first) first.focus();
+  }
+  init();
 })();
 </script>
 </body>
