@@ -47,6 +47,51 @@
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js'));}
 </script>
         
+
+<!-- Marvin override: name width & font -->
+<style>
+
+/* Narrow name column and enlarge font */
+.pname, .name {
+  width: 96px !important;
+  max-width: 96px !important;
+  min-width: 80px !important;
+  font-size: 1.15rem !important;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* If using CSS grid for scorecard, shrink the first column */
+:root {
+  --name-col-width: 96px;
+}
+.scorecard, .grid, .sheet {
+  grid-template-columns: var(--name-col-width) repeat(18, 1fr) !important;
+}
+
+/* Table layouts: explicitly set first column */
+table.scorecard thead th:first-child,
+table.scorecard tbody td:first-child,
+table thead th.name:first-child,
+table tbody td.name:first-child {
+  width: 96px !important;
+}
+
+</style>
+<style>
+
+/* Marvin: widen sticky name column to prevent truncation */
+.pname, .name{
+  width: 140px !important;
+  max-width: 140px !important;
+  min-width: 120px !important;
+}
+:root{ --name-col-width: 140px !important; }
+.name{ z-index: 2 !important; } /* keep above scrolling cells */
+
+</style>
 </head>
 <body>
 <div class="wrap">
