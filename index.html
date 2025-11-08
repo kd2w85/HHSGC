@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>HHSGC — Scorecard — Fix12 (sticky left names)</title>
+<style>
+  html{ -webkit-text-size-adjust: 100%; }
+  @media (max-width: 430px){ html{ -webkit-text-size-adjust: 95%; } }
+
+  :root{--grid:#e5e7eb;--ink:#111827;--muted:#f3f4f6;--disabled:#f8fafc;--rowH:64px}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink)}
+  .wrap{display:flex;gap:10px;flex-direction:column;padding:8px}
+  .card{border:2px solid #e5e7eb;border-radius:12px;padding:8px}
+
+  table{border-collapse:separate;border-spacing:0;width:100%}
+  th,td{border-right:1px solid var(--grid);border-bottom:1px solid var(--grid)}
+  th:first-child,td:first-child{border-left:1px solid var(--grid)}
+  thead th{position:sticky;top:0;background:#f8fafc;z-index:20} /* top header */
+  th{background:#eef2ff;text-align:center;height:var(--rowH);white-space:nowrap;padding:0 6px}
+  td{padding:0;text-align:center}
+
+  /* Scroll container (must own the overflow for sticky to work) */
+  .grid{overflow:auto;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;max-width:100vw;overscroll-behavior:contain}
+
+  /* Sticky left column — Safari-friendly (keep as table-cell, no flex) */
+  th.sticky-left,
+  td.sticky-left{
+    position:sticky; left:0; z-index:25; /* above body cells */
+    background:#fff; /* required so content doesn't show through */
+    background-clip:padding-box;
+    min-width:160px; max-width:180px;
+    box-shadow: 2px 0 0 0 var(--grid); /* fake divider on right */
+  }
+  /* Header cell on left needs to be above top header row intersection */
+  thead th.sticky-left{ z-index:30; background:#eef2ff; }
+
+  /* Inner layout for the name cell */
+  .name-inner{
+    display:flex; align-items:center; justify-content:space-between;
+    height:var(--rowH); padding:0 8px; gap:8px; font-weight:900; font-size:18px;
+  }
+  .segchip{ font-size:12px; font-weight:900; color:#374151; margin-right:auto; }
+  .nm{ display:inline-block; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:right; }
+
+  .cellwrap{display:grid; grid-template-rows:1fr 1fr; height:var(--rowH)}
+  input.sc{padding:0 3px;height:calc(var(--rowH)/2);line-height:calc(var(--rowH)/2);font-size:18px;border:0;width:100%;text-align:center;font-weight:900}
+  input.pt{padding:0 3px;height:calc(var(--rowH)/2);line-height:calc(var(--rowH)/2);font-size:16px;border:0;border-top:1px dashed #e5e7eb;width:100%;text-align:center;font-weight:900}
+  .sum{background:#e8fff2;font-weight:900}
+  .holew{min-width:60px; max-width:60px;}
+  .h1col{border-left:2px solid #d1d5db !important}
+
+  /* Hole column widths */
+  #card thead th:nth-child(n+2):nth-child(-n+19),
+  #card tbody td:nth-child(n+2):nth-child(-n+19){ min-width:60px; max-width:60px; }
+
+  @media (max-width: 400px){
+    th.sticky-left, td.sticky-left{ min-width:140px; max-width:150px }
+    .nm{ max-width:100px }
+    #card thead th:nth-child(n+2):nth-child(-n+19),
+    #card tbody td:nth-child(n+2):nth-child(-n+19){ min-width:56px; max-width:56px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="card" style="width:100%">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+      <div id="titleOut" style="font-size:20px;font-weight:900">HHSGC — Rotating Teams 6/6/6</div>
+      <span style="font-size:12px;font-weight:900;color:#374151">OUT/IN · Segment points · $1 Putts Pot · Greenies</span>
+    </div>
+    <div class="grid">
+      <table id="card">
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  function $(id){return document.getElementById(id);}
+
+  const players=[
+    {name:'Dave', teams:['A','B','A']},
+    {name:'Earl', teams:['B','A','B']},
+    {name:'Greg', teams:['A','B','A']},
+    {name:'Cloy', teams:['B','A','B']},
+  ];
+
+  function render(){
+    const thead=$('thead'), tbody=$('tbody');
+    thead.innerHTML=''; tbody.innerHTML='';
+
+    // Header row
+    const trh=document.createElement('tr');
+    const thL=document.createElement('th');
+    thL.className='sticky-left'; // sticky left header
+    thL.textContent='S1/S2/S3 · Player';
+    trh.appendChild(thL);
+
+    for(let h=1; h<=18; h++){
+      const th=document.createElement('th');
+      th.innerHTML='H'+h+'<div style="font-size:11px;font-weight:900;color:#6b7280">S/P</div>';
+      if(h===1) th.classList.add('h1col');
+      trh.appendChild(th);
+      if(h===9){ const thOut=document.createElement('th'); thOut.className='sum holew'; thOut.textContent='OUT'; trh.appendChild(thOut); }
+      if(h===18){ const thIn=document.createElement('th'); thIn.className='sum holew'; thIn.textContent='IN'; trh.appendChild(thIn); }
+    }
+    ['Pts S1','Pts S2','Pts S3','Putts','Strokes','Earnings $','Greenies Pts'].forEach(t=>{
+      const th=document.createElement('th'); th.textContent=t; trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+
+    // Body rows
+    players.forEach((p,i)=>{
+      const tr=document.createElement('tr');
+
+      const tdName=document.createElement('td');
+      tdName.className='sticky-left';
+      tdName.innerHTML=`<div class="name-inner"><span class="segchip">${p.teams.join('/')}</span><span class="nm">${p.name}</span></div>`;
+      tr.appendChild(tdName);
+
+      for(let h=0; h<18; h++){
+        const td=document.createElement('td');
+        if(h===0) td.classList.add('h1col');
+        td.innerHTML = `<div class="cellwrap">
+            <input class="sc" inputmode="numeric" maxlength="2" data-r="${i*2}" data-c="${h}">
+            <input class="pt" inputmode="numeric" maxlength="1" data-r="${i*2+1}" data-c="${h}">
+          </div>`;
+        tr.appendChild(td);
+        if(h===8){ const out=document.createElement('td'); out.className='sum holew'; out.textContent=''; tr.appendChild(out); }
+        if(h===17){ const inn=document.createElement('td'); inn.className='sum holew'; inn.textContent=''; tr.appendChild(inn); }
+      }
+
+      ['0','0','0','0','0','0.00','0'].forEach(v=>{ const td=document.createElement('td'); td.className='sum'; td.textContent=v; tr.appendChild(td); });
+      tbody.appendChild(tr);
+    });
+  }
+
+  function init(){
+    render();
+    const first=document.querySelector('input[data-r="0"][data-c="0"]');
+    if(first){ first.focus(); first.select(); }
+  }
+  init();
+})();
+</script>
+</body>
+</html>
